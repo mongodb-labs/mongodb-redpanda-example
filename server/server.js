@@ -24,7 +24,7 @@ function randomDecimal(min, max) {
   return Math.abs((Math.random() * (max - min) + min).toFixed(2) * 1);
 }
 
-app.get('/api/send',async (req,res)=>
+app.get('/api/test',async (req,res)=>
 {
   const producer = kafka.producer()
 
@@ -46,11 +46,9 @@ app.get('/api/list', (req,res)=>{
  res.send(company_name);
 
 })
-//app.get('/api/go', async (req,res)=>
+//main function that spins up a thread to do the perpetual work of generating tickers
 async function writeStocks(stocklist)
 {
- // const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-  //spin up worjker through to start writing
 
   var topic_message;
   if (isMainThread) {
