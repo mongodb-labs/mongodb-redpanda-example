@@ -16,7 +16,7 @@ app.use( express.static( path.join( application_root, '/') ) );
 //Connect to Redpanda
 const kafka = new Kafka({
   clientId: 'my-app',
-  brokers: ['localhost:9092']
+  brokers: ['redpanda:9092']
 })
 
 //Connect to MongoDB
