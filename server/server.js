@@ -1,17 +1,30 @@
 const express = require('express')
-const {Kafka}=require('kafkajs')
+const {Kafka, KafkaJSBrokerNotFound}=require('kafkajs')
+const { MongoClient } = require('mongodb');
+const path = require('path');
 const { Worker, isMainThread, parentPort } = require('worker_threads');
 var fs = require('fs');
 const app = express()
 const port = 4000
 
+var application_root = __dirname;
+
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
+app.use( express.static( path.join( application_root, '/') ) );
 
+//Connect to Redpanda
 const kafka = new Kafka({
   clientId: 'my-app',
   brokers: ['localhost:9092']
 })
+
+//Connect to MongoDB
+
+const uri =
+  "mongodb://127.0.0.1"; // mongo1:27017/?replicaSet=rs0";
+const client = new MongoClient(uri);
+
 
 app.get('/api/hello', (req, res) => {
   res.send({'title':'Hello World!'})
@@ -46,6 +59,112 @@ app.get('/api/list', (req,res)=>{
  res.send(company_name);
 
 })
+//Delete the topics
+app.get('/api/reset', async (req,res)=>{
+
+  const admin = kafka.admin()
+  await admin.connect();
+
+  await admin.listTopics().then((topic_list)=>{
+    console.log(topic_list);
+     admin.deleteTopics({
+      topics: topic_list
+  }).then(()=>{ admin.disconnect();})
+
+})})
+
+app.get('/', function (req, res) {
+ // res.render('index', {});
+  res.redirect('/index.html');
+})
+//Create agg query and return 
+
+
+app.post('/api/get', async function (req, res) {
+//console.log('req.body.length='+req.body.length);
+  try {
+    // Connect the client to the server
+    await client.connect();
+    const db = client.db("Stocks");
+    const coll = db.collection("StockData");
+    const pipeline = [
+      { $match : { company_symbol: {$in : req.body } }},
+      {
+        $setWindowFields:
+              {
+                    partitionBy: '$company_name',
+                    sortBy: { 'tx_time': 1 },
+                    output:
+                           {
+                                    averagePrice:
+                                    {
+                                          $avg: "$value",
+                                          window:
+                                                {
+                                                documents:
+                                                     [ "unbounded", "current" ]
+                                                }
+                                    }
+                           }
+              }
+    },{$sort: {
+      "tx_time": -1
+    }}, {$limit: req.body.length}
+  ];
+  const aggCursor=coll.aggregate(pipeline);
+  console.log('pip='+JSON.stringify(pipeline));
+  var x=[];
+
+  for await (const doc of aggCursor) {
+    x.push(JSON.stringify(doc));
+     
+  }
+  //THEW ISSUE IS PASSING THE JSON BACK TO THE BROWSER!
+  //console.log('ANSWER='+JSON.stringify(x));
+
+  res.send(x);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+
+  /*
+  var s=[];
+
+
+//TEMP, replace with query to MongoDB
+for (var key in req.body) {
+  if (req.body.hasOwnProperty(key)) {
+    item = req.body[key];
+    var f={};
+    f.key=item;
+    f.value=randomInt(10,100);
+    s.push(f);
+  }
+}
+
+console.log('----->' + JSON.stringify(s));
+return (s);
+*/
+})
+
+ // Old get that shows activity
+ /*
+ app.get('/api/get', async function (req, res) {
+  const consumer = kafka.consumer({ groupId: 'stock-read-group' })
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'activity', fromBeginning: false });
+
+  consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+          topic_message=message.value.toString() + "\n"
+          res.write(topic_message);
+          }
+        
+        }, 
+      )
+ })*/
+
 //main function that spins up a thread to do the perpetual work of generating tickers
 async function writeStocks(stocklist)
 {
@@ -55,31 +174,44 @@ async function writeStocks(stocklist)
     //listen to topic
     const consumer = kafka.consumer({ groupId: 'stock-group' })
     const worker = new Worker('./worker.mjs',{workerData: stocklist});
-    worker.on('message', (msg) => { console.log(msg); });
+    worker.on('message', (msg) => { console.log('->' + msg + '<-'); });
     worker.on('error', (err) => { throw err; });
     worker.on('exit', () => { console.log('exiting'); });
-    await consumer.connect()
-    await consumer.subscribe({ topic: 'status', fromBeginning: false })
-    await consumer.run({
-      eachMessage: async ({ topic, partition, message }) => {
-        topic_message=message.value.toString();
-        console.log({
-          value: topic_message,
-        })
-        if (topic_message=='STOP') { 
-          //stio worker threads
-         // res.send({'status':'stopped'});
-          consumer.disconnect(); 
-          worker.terminate();
-        
-        }
-      
-      }, 
-    });
+    await consumer.connect();
+    await consumer.subscribe({ topic: 'status', fromBeginning: false });
+
+     consumer.run({
+          eachMessage: async ({ topic, partition, message }) => {
+            topic_message=message.value.toString();
+         //   console.log('READING THE STATUS-->');
+         //   console.log({
+          //    value: topic_message,
+          //  })
+            if (topic_message=='STOP') { 
+              console.log('\n\nStopping the data generation\n\n'); 
+              consumer.disconnect(); 
+              worker.terminate();
+            }
+          
+          }, 
+        }); 
 
   }
 
 }
+
+app.get('/api/stop', async (req,res)=>
+{
+  const producer = kafka.producer()
+  await producer.connect().then(()=>{
+    producer.send({
+      topic: 'status',
+      messages: [{ value: 'STOP'},],
+    })
+  });
+  res.send({'status':'success'});
+
+})
 
 app.get('/api/start/:num', (req,res)=>
 {
@@ -132,4 +264,25 @@ app.listen(port, () => {
 
     //or if this doesn't work, for string body
     var postData = JSON.parse(req.body);
-});*/
+});
+
+
+//app.get('/api/reset',async (req,res)=>
+//{
+ // const consumer = kafka.consumer({ groupId: 'stock-read-group' })
+ // await consumer.connect();
+ // await consumer.subscribe({ topic: 'activity', fromBeginning: false });
+
+  //const kafka = new Kafka(...)
+//const admin = kafka.admin()
+
+//await admin.deleteTopics({
+ // topics: 'status'
+//})
+
+// remember to connect and disconnect when you are done
+//await admin.connect()
+//a//wait admin.disconnect()
+
+//})
+*/
