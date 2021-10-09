@@ -72,20 +72,20 @@ services:
       - "27017:27017"
     restart: always
 
-   nodesvr:
-     image: node:16
-     build:
-       context: .
-       dockerfile: Dockerfile-Nodesvr
-     hostname: nodesvr
-     container_name: nodesvr
-     depends_on:
-       - redpanda
-       - mongo1
-     ports:
-       - "4000:4000"
-     networks:
-       - localnet
+  nodesvr:
+    image: node:16
+    build:
+      context: .
+      dockerfile: Dockerfile-Nodesvr
+    hostname: nodesvr
+    container_name: nodesvr
+    depends_on:
+      - redpanda
+      - mongo1
+    ports:
+      - "4000:4000"
+    networks:
+      - localnet
 
 networks:
   localnet:
