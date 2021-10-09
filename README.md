@@ -9,7 +9,6 @@ This will spin up the following containers:
 - RedPanda
 - Kafka Connect with MongoDB Connector for Apache Kafka installed
 - Node Server (hosting an Express instance back end) (port 4000)
-- NPM Server (hosting the React App front end) (port 3000)
 
 ![Architecture](architecture.png)
 
