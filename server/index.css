@@ -1,0 +1,66 @@
+body{
+    background-color: #2b6777;
+    text-align: center;
+    margin: auto;
+   }
+.status {
+    color:white;
+    font-size: 16px;
+    margin: 4px 2px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.buttonBox {
+    padding: 20px;
+    border: 1px solid black;
+    background-color: gray;
+    margin: 50px;
+}
+.button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    border: 1px solid black;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    }
+.button-red {
+    background-color: #f44336;
+}
+h1 {
+    color: #f2f2f2;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 200%;
+    text-decoration-line: underline;
+    }
+h2 {
+    color: #f2f2f2;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 100%;
+    text-decoration-line: underline;
+}
+.resultsCss {
+    margin: auto;
+    padding: 10px;
+}
+table {
+    border: 3px solid #000000;
+    text-align: center;
+    border-collapse: collapse;
+}
+td {
+    padding: 5px 4px;
+    width: 400px;
+    margin:auto;
+    font-size: 18px;
+}
+tr:nth-child(odd) {
+    background-color: rgb(222, 222, 222);
+}
+tr:nth-child(even) {
+    background-color: rgb(133, 187, 245);
+}

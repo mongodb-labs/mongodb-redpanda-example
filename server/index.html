@@ -1,0 +1,97 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <script>
+        var myTimer;
+        var counter=0;
+        var stock_list=[];
+
+        function setupDefault()
+        {
+            document.getElementById("buttonStop").style.visibility = "hidden"; 
+            document.getElementById("buttonStart").style.visibility = "visible"; 
+        }
+
+        function Start() {
+           
+            fetch('/api/start/10')
+            .then(response=>{
+                return response.json();
+            })
+            .then(stocks=>{  
+                document.getElementById("results").innerHTML="";
+                var x = document.createElement("TABLE");
+                    x.setAttribute("id", "myTable");
+                    x.setAttribute("css","resultsTable")
+                    x.innerHTML = '<thead><tr style="background-color:rgb(1, 150, 58);"><td>Company Name</td><td>Symbol</td><td>Current Price</td><td>Average Price</td></tr></thead>';
+                    document.getElementById("results").appendChild(x);
+
+                    var tb = document.createElement("TBODY");
+                for (var i=0;i<stocks.length;i++) 
+                {
+                    var y = document.createElement("TR");
+                    y.innerHTML = '<td>' + stocks[i].company_name + '</td><td>' + stocks[i].company_symbol + '</td><td><div id=' + stocks[i].company_symbol + '_value>' + stocks[i].value + '</div><td><div id=' + stocks[i].company_symbol + '_avg>' + stocks[i].averagePrice + '</div></td>';
+                    stock_list.push(stocks[i].company_symbol);
+                    tb.appendChild(y);
+                    //document.getElementById("results").appendChild(y, results.firstChild);
+                }
+                document.getElementById("results").appendChild(tb, results.firstChild);
+              
+            });
+
+            myTimer=setInterval(QueryTopic, 5000);
+            document.getElementById("buttonStop").style.visibility = "visible"; 
+            document.getElementById("buttonStart").style.visibility = "hidden"; 
+
+        }
+        async function QueryTopic()
+        {
+           const response=await fetch('/api/get',{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(stock_list) 
+           }).then(response => response.json())
+            .then(data => {
+                data.forEach((d)=>{
+                    var f=JSON.parse(d);
+                    document.getElementById(f.company_symbol+'_value').innerHTML=f.value;
+                    document.getElementById(f.company_symbol+'_avg').innerHTML=f.averagePrice;
+                })
+ /*
+ Sample response
+ ---->"{\"tx_time\":\"2021-10-09T12:19:11.000Z\",\"company_name\":\"ANXIOUS CHINO CORPORATION\",\"value\":14.19,\"company_symbol\":\"ACC\",\"_id\":\"616188bf8ebc79284e5dfa1d\",\"averagePrice\":14.190000000000001}"
+
+*/
+            }).catch((error) => {
+            console.error('Error:', error);
+            });
+        }
+  
+
+        function Stop()
+        {
+            fetch('/api/stop')
+            .then(response=>{
+                return response.json();
+                })
+
+            //Stop the timer so we don't keep querying the backend
+            clearInterval(myTimer);
+            document.getElementById("buttonStop").style.visibility = "hidden"; 
+            document.getElementById("buttonStart").style.visibility = "visible"; 
+        }
+    </script>
+
+    <body onload="setupDefault()">
+        <h1>MongoDB / Redpanda Stock Example</h1>
+        <div class="buttonBox">
+        <button class="button" id="buttonStart" onclick="Start()">Start</button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button class="button button-red" id="buttonStop" onclick="Stop()">Stop</button>  
+        </div>
+
+        <div class="buttonBox" id="results"></div>
+    </body>
+</html>
