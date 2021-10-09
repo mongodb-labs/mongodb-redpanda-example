@@ -20,7 +20,6 @@ services:
     - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
     - --advertise-kafka-addr
     - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
-    - --auto-create-topics-enabled
     image: docker.vectorized.io/vectorized/redpanda:latest
     container_name: redpanda-1
     hostname: redpanda
@@ -64,7 +63,7 @@ services:
   mongo1:
     image: "mongo:latest"
     container_name: mongo1
-    command: --replSet rs0 --oplogSize 128
+   # command: --replSet rs0 --oplogSize 128
     volumes:
       - rs1:/data/db
     networks:
@@ -88,24 +87,24 @@ services:
   #   networks:
   #     - localnet
 
-  reactclient:
-    image: node:16-alpine
-    build:
-      context: .
-      dockerfile: Dockerfile-Reactclient
-    hostname: reactc
-    container_name: reactc
-    depends_on:
-      - redpanda
-      - mongo1
-      - nodesvr
-    ports:
-      - "3000:3000"
-    # volumes:
-    #   - '.:/app'
-    #   - '/app/node_modules'
-    networks:
-      - localnet
+  # reactclient:
+  #   image: node:16-alpine
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile-Reactclient
+  #   hostname: reactc
+  #   container_name: reactc
+  #   depends_on:
+  #     - redpanda
+  #     - mongo1
+  #     - nodesvr
+  #   ports:
+  #     - "3000:3000"
+  #   # volumes:
+  #   #   - '.:/app'
+  #   #   - '/app/node_modules'
+  #   networks:
+  #     - localnet
 
 networks:
   localnet:

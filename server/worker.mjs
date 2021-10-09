@@ -1,5 +1,7 @@
 import { parentPort, workerData } from 'worker_threads';
 
+// credit: https://deanhume.com/experimenting-with-the-streams-api/
+
 //Make Connection to Redpanda
 import { Kafka} from 'kafkajs'
 
@@ -24,7 +26,7 @@ function newvalue(old_value)
     var change_percent = Math.random() * (.0001);// + min; * Math.random(0.0, .001)  # 001 - flat .01 more
     var change_amount = old_value * change_percent
     var new_value=0;
-    console.log('change amount=' + Number(change_amount));
+   // console.log('change amount=' + Number(change_amount));
     if (Math.random()*100>50)
     {
         new_value = old_value + change_amount;
@@ -48,14 +50,14 @@ while (true) {
 
         await producer.send({
             topic: 'activity',
-            messages: [{ value: JSON.stringify(stock)},],
+            messages: [{ value: JSON.stringify(stock)  },],
           })
 
         }
 
     };
 
-    await parentPort.postMessage('Processing stock ' + JSON.stringify(stocks));
+  //  await parentPort.postMessage('Processing stock '+ new Date().toISOString().replace(/T/, ' ').replace(/\..+/, ''));
     await delay(1000);
 
  }

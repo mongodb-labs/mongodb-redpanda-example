@@ -1,0 +1,15 @@
+{"name": "mongo-ts-sink",
+    "config": {
+      "connector.class":"com.mongodb.kafka.connect.MongoSinkConnector",
+      "tasks.max":"1",
+      "topics":"activity",
+      "connection.uri":"mongodb://mongo1",
+      "database":"Stocks",
+      "collection":"StockData",
+      "key.converter":"org.apache.kafka.connect.storage.StringConverter",
+      "value.converter":"org.apache.kafka.connect.json.JsonConverter",
+      "value.converter.schemas.enable":"false",
+      "timeseries.timefield":"tx_time",
+      "timeseries.timefield.auto.convert":"true"
+      
+ }}

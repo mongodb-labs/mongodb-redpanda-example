@@ -20,16 +20,15 @@ const kafka = new Kafka({
 })
 
 //Connect to MongoDB
-
 const uri =
-  "mongodb://127.0.0.1"; // mongo1:27017/?replicaSet=rs0";
+  "mongodb://127.0.0.1"; 
 const client = new MongoClient(uri);
 
-
+//This function tests the REST API
 app.get('/api/hello', (req, res) => {
   res.send({'title':'Hello World!'})
 })
-// Support functions
+// Support functions for generating ficticious data
 function randomInt(low, high) {
   return Math.floor(Math.random() * (high - low) + low)
 }
@@ -37,6 +36,7 @@ function randomDecimal(min, max) {
   return Math.abs((Math.random() * (max - min) + min).toFixed(2) * 1);
 }
 
+//This function tests the connectivity to Redpanda
 app.get('/api/test',async (req,res)=>
 {
   const producer = kafka.producer()
@@ -48,17 +48,13 @@ app.get('/api/test',async (req,res)=>
   await producer.send({
     topic: 'test-topic',
     messages: [
-      { value: 'Hello KafkaJS user!' },
+      { value: 'Hello Redpanda!' },
     ],
   })
   
-  await producer.disconnect().then(()=>{ console.log('DONE!'); res.send({'status':'done'});})
+  await producer.disconnect().then(()=>{ res.send({'status':'test message sent to test-topic'});})
 })
-// Kicks off the generation of stock ticker symbol and their data
-app.get('/api/list', (req,res)=>{
- res.send(company_name);
 
-})
 //Delete the topics
 app.get('/api/reset', async (req,res)=>{
 
@@ -74,14 +70,11 @@ app.get('/api/reset', async (req,res)=>{
 })})
 
 app.get('/', function (req, res) {
- // res.render('index', {});
   res.redirect('/index.html');
 })
-//Create agg query and return 
-
 
 app.post('/api/get', async function (req, res) {
-//console.log('req.body.length='+req.body.length);
+
   try {
     // Connect the client to the server
     await client.connect();
@@ -112,15 +105,12 @@ app.post('/api/get', async function (req, res) {
     }}, {$limit: req.body.length}
   ];
   const aggCursor=coll.aggregate(pipeline);
-  console.log('pip='+JSON.stringify(pipeline));
+
   var x=[];
 
   for await (const doc of aggCursor) {
-    x.push(JSON.stringify(doc));
-     
+    x.push(JSON.stringify(doc));    
   }
-  //THEW ISSUE IS PASSING THE JSON BACK TO THE BROWSER!
-  //console.log('ANSWER='+JSON.stringify(x));
 
   res.send(x);
   } finally {
@@ -128,42 +118,7 @@ app.post('/api/get', async function (req, res) {
     await client.close();
   }
 
-  /*
-  var s=[];
-
-
-//TEMP, replace with query to MongoDB
-for (var key in req.body) {
-  if (req.body.hasOwnProperty(key)) {
-    item = req.body[key];
-    var f={};
-    f.key=item;
-    f.value=randomInt(10,100);
-    s.push(f);
-  }
-}
-
-console.log('----->' + JSON.stringify(s));
-return (s);
-*/
 })
-
- // Old get that shows activity
- /*
- app.get('/api/get', async function (req, res) {
-  const consumer = kafka.consumer({ groupId: 'stock-read-group' })
-  await consumer.connect();
-  await consumer.subscribe({ topic: 'activity', fromBeginning: false });
-
-  consumer.run({
-        eachMessage: async ({ topic, partition, message }) => {
-          topic_message=message.value.toString() + "\n"
-          res.write(topic_message);
-          }
-        
-        }, 
-      )
- })*/
 
 //main function that spins up a thread to do the perpetual work of generating tickers
 async function writeStocks(stocklist)
@@ -183,10 +138,7 @@ async function writeStocks(stocklist)
      consumer.run({
           eachMessage: async ({ topic, partition, message }) => {
             topic_message=message.value.toString();
-         //   console.log('READING THE STATUS-->');
-         //   console.log({
-          //    value: topic_message,
-          //  })
+
             if (topic_message=='STOP') { 
               console.log('\n\nStopping the data generation\n\n'); 
               consumer.disconnect(); 
@@ -199,7 +151,7 @@ async function writeStocks(stocklist)
   }
 
 }
-
+//This function places the stop message on the status topic
 app.get('/api/stop', async (req,res)=>
 {
   const producer = kafka.producer()
@@ -209,7 +161,7 @@ app.get('/api/stop', async (req,res)=>
       messages: [{ value: 'STOP'},],
     })
   });
-  res.send({'status':'success'});
+  res.send({'status':'stopped'});
 
 })
 
@@ -253,36 +205,8 @@ app.get('/api/start/:num', (req,res)=>
   writeStocks(result);
   res.send(result)
 })
+
+//Main 
 app.listen(port, () => {
   console.log(`Stock traders listening at http://localhost:${port}`)
 })
-
-/*app.post("/yourpath", (req, res)=>{
-
-    var postData = req.body;
-    //then work with your data
-
-    //or if this doesn't work, for string body
-    var postData = JSON.parse(req.body);
-});
-
-
-//app.get('/api/reset',async (req,res)=>
-//{
- // const consumer = kafka.consumer({ groupId: 'stock-read-group' })
- // await consumer.connect();
- // await consumer.subscribe({ topic: 'activity', fromBeginning: false });
-
-  //const kafka = new Kafka(...)
-//const admin = kafka.admin()
-
-//await admin.deleteTopics({
- // topics: 'status'
-//})
-
-// remember to connect and disconnect when you are done
-//await admin.connect()
-//a//wait admin.disconnect()
-
-//})
-*/

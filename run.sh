@@ -13,11 +13,12 @@ docker-compose up -d --build
 
 sleep 5
 
-echo -e "\nConfiguring the MongoDB ReplicaSet of 1 node...\n"
-docker-compose exec mongo1 /usr/bin/mongo --eval '''rsconf = { _id : "rs0", members: [ { _id : 0, host : "mongo1:27017", priority: 1.0 }]};
-rs.initiate(rsconf);'''
+#echo -e "\nConfiguring the MongoDB ReplicaSet of 1 node...\n"
+#docker-compose exec mongo1 /usr/bin/mongo --eval '''rsconf = { _id : "rs0", members: [ { _id : 0, host : "mongo1:27017", priority: 1.0 }]};
+#rs.initiate(rsconf);'''
 
 sleep 5
+
 echo "\n\nKafka Connectors status:\n\n"
 curl -s "http://localhost:8083/connectors?expand=info&expand=status" | \
            jq '. | to_entries[] | [ .value.info.type, .key, .value.status.connector.state,.value.status.tasks[].state,.value.info.config."connector.class"]|join(":|:")' | \
@@ -35,8 +36,7 @@ The following services are running:
 MongoDB 1-node replica set on port 27017
 Redpanda on 8082 (Redpanda proxy on 8083)
 Kafka Connect on 8083
-Node Server on 3000 is hosting the API that is used by the client
-Node Server on 8080 is running the React Client
+Node Server on 4000 is hosting the API and homepage
 
 Status of kafka connectors:
 sh status.h

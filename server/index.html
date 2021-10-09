@@ -1,229 +1,97 @@
 <html>
     <head>
-        <style>
-            body{
-             background-color: #2b6777;   
-            }
-            .button {
-                background-color: #4CAF50; /* Green */
-                border: none;
-                color: white;
-                padding: 15px 32px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                cursor: pointer;
-                }
-            .button-red {
-                background-color: #f44336;
-            }
-            h1 {
-                color: #f2f2f2;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 200%;
-                text-decoration-line: underline;
-                }
-            h2 {
-            color: #f2f2f2;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 100%;
-            text-decoration-line: underline;
-            }
-            table {
-            width: 100%;
-            font-family: Arial, Helvetica, sans-serif;
-            }
-            th, td {
-            padding: 3px;
-            text-align: left;
-            color: #f2f2f2;
-            }
-        </style>
+        <link rel="stylesheet" href="index.css">
     </head>
     <script>
         var myTimer;
         var counter=0;
         var stock_list=[];
 
+        function setupDefault()
+        {
+            document.getElementById("buttonStop").style.visibility = "hidden"; 
+            document.getElementById("buttonStart").style.visibility = "visible"; 
+        }
+
         function Start() {
+           
             fetch('/api/start/10')
             .then(response=>{
                 return response.json();
             })
             .then(stocks=>{  
-                
+                document.getElementById("results").innerHTML="";
                 var x = document.createElement("TABLE");
                     x.setAttribute("id", "myTable");
-                    x.setAttribute("width","700px");
-                    x.setAttribute("css","company_table")
+                    x.setAttribute("css","resultsTable")
+                    x.innerHTML = '<thead><tr style="background-color:rgb(1, 150, 58);"><td>Company Name</td><td>Symbol</td><td>Current Price</td><td>Average Price</td></tr></thead>';
                     document.getElementById("results").appendChild(x);
 
+                    var tb = document.createElement("TBODY");
                 for (var i=0;i<stocks.length;i++) 
                 {
                     var y = document.createElement("TR");
-                    y.innerHTML = '<td style="width: 400px">' + stocks[i].company_name + '</td><td style="width: 200px">' + stocks[i].company_symbol + '</td><td width="100px"><div id=' + stocks[i].company_symbol + '>' + stocks[i].value + '</div></td>';
+                    y.innerHTML = '<td>' + stocks[i].company_name + '</td><td>' + stocks[i].company_symbol + '</td><td><div id=' + stocks[i].company_symbol + '_value>' + stocks[i].value + '</div><td><div id=' + stocks[i].company_symbol + '_avg>' + stocks[i].averagePrice + '</div></td>';
                     stock_list.push(stocks[i].company_symbol);
-                    document.getElementById("results").appendChild(y, results.firstChild);
+                    tb.appendChild(y);
+                    //document.getElementById("results").appendChild(y, results.firstChild);
                 }
+                document.getElementById("results").appendChild(tb, results.firstChild);
               
             });
 
-         //   QueryTopic();
-          myTimer=setInterval(function(){ QueryTopic().then(r=>{
-              console.log('==>' + r + '<=====');
-          }) }, 5000);
+            myTimer=setInterval(QueryTopic, 5000);
+            document.getElementById("buttonStop").style.visibility = "visible"; 
+            document.getElementById("buttonStart").style.visibility = "hidden"; 
 
-            //get this to work, showing kafka topics/mongodb
-       //   document.getElementById("results").innerHTML = "company list goes here";
         }
         async function QueryTopic()
         {
-            console.log('querying...1' + JSON.stringify(stock_list));
-
            const response=await fetch('/api/get',{
             method: 'POST',
             headers: {
-      'Content-Type': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(stock_list) 
            }).then(response => response.json())
-.then(data => {
-    data.forEach((d)=>{
-        var f=JSON.parse(d);
-        document.getElementById(f.company_symbol).innerHTML=f.value;
-        console.log('---->' + f.company_symbol + '\n');
-    })
- // console.log('Success:', data);
+            .then(data => {
+                data.forEach((d)=>{
+                    var f=JSON.parse(d);
+                    document.getElementById(f.company_symbol+'_value').innerHTML=f.value;
+                    document.getElementById(f.company_symbol+'_avg').innerHTML=f.averagePrice;
+                })
  /*
+ Sample response
  ---->"{\"tx_time\":\"2021-10-09T12:19:11.000Z\",\"company_name\":\"ANXIOUS CHINO CORPORATION\",\"value\":14.19,\"company_symbol\":\"ACC\",\"_id\":\"616188bf8ebc79284e5dfa1d\",\"averagePrice\":14.190000000000001}"
 
 */
-}).catch((error) => {
-  console.error('Error:', error);
-});
-
-         /*  const results=await response.json();
-           return (results);
-
-           if (!response.ok) {
-                const message = `An error has occured: ${response.status}`;
-                console.log(message);
-            }else{console.log('response='+ response)}
-           console.log('results=' + results);
-          
-           */
-           
-       /*    const results=response.body
-           .pipeThrough(new TextDecoderStream())
-           .pipeThrough(splitStream('\n'))
-           .pipeThrough(parseJSON())
-           .pipeThrough(results.getReader())
-           //console.log(results);
-          // var yy = results.getReader();
-           console.log('-->' + JSON.stringify(results) + '<--');
-           writeToDOM(results);*/
-           //returns average count from REST API
-
-
+            }).catch((error) => {
+            console.error('Error:', error);
+            });
         }
-        function splitStream(splitOn) {
-    let buffer = '';
-
-    return new TransformStream({
-        transform(chunk, controller) {
-            buffer += chunk;
-            const parts = buffer.split(splitOn);
-            parts.slice(0, -1).forEach(part => controller.enqueue(part));
-            buffer = parts[parts.length - 1];
-        },
-        flush(controller) {
-            if (buffer) controller.enqueue(buffer);
-        }
-    });
-}
-
-/**
- * Parse the NDJSON results
- */
-function parseJSON() {
-    return new TransformStream({
-        transform(chunk, controller) {
-            controller.enqueue(JSON.parse(chunk));
-        }
-    });
-}
-        function writeToDOM(reader) {
-    reader.read().then(
-        ({ value, done }) => {
-            if (done) {
-                console.log("The stream was already closed!");
-
-            } else {
-                // Build up the values
-               // let result = document.createElement('div');
-                let results = document.getElementById("redpanda_results_table");
-
-              //  result.innerHTML = `<div>ID: ${value.company_name} - Phone: ${value.company_symbol} - Result: ${value.value}</div><br>`;
-
-                // Prepend to the target
-               // document.getElementById("redpanda_results").insertBefore(result, redpanda_results.firstChild);
-                var y = document.createElement("TR");
-               // y.setAttribute("id", "row" + counter);
-                y.innerHTML = '<td style="width: 400px">' + value.company_name + '</td><td style="width: 200px">' + value.company_symbol + '</td><td width="100px">'+ value.value + '</td>';
-                    
-                results.appendChild(y, results.firstChild);
-
-              // console.log(document.getElementById("redpanda_results_table").rows.length);
-
-             //   while (document.getElementById("redpanda_results_table").rows.length>20)
-              //  {
-               //     console.log(document.getElementById("redpanda_results_table").rows.length);/
-
-                //    document.getElementById("redpanda_results_table").deleteRow(1); //document.getElementById("redpanda_results_table").rows.length-1);
-               // }
-                
-                // Recursively call
-                writeToDOM(reader);
-            }
-        },
-        e => console.error("The stream became errored and cannot be read from!", e)
-    );
-}
+  
 
         function Stop()
         {
             fetch('/api/stop')
             .then(response=>{
                 return response.json();
-            })
-            .then(stop=>{
-                document.getElementById("results").innerHTML=JSON.stringify(stop);
-            })
-            clearInterval(myTimer);
-        }
+                })
 
+            //Stop the timer so we don't keep querying the backend
+            clearInterval(myTimer);
+            document.getElementById("buttonStop").style.visibility = "hidden"; 
+            document.getElementById("buttonStart").style.visibility = "visible"; 
+        }
     </script>
 
-    <body>
+    <body onload="setupDefault()">
         <h1>MongoDB / Redpanda Stock Example</h1>
+        <div class="buttonBox">
+        <button class="button" id="buttonStart" onclick="Start()">Start</button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button class="button button-red" id="buttonStop" onclick="Stop()">Stop</button>  
+        </div>
 
-        <button class="button" onclick="Start()">Start</button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <button class="button button-red" onclick="Stop()">Stop</button>  
-
-        <br/></br><br/>
-        <h2>Company list:</h2>
-           
-        <div id="results"></div>
-       
-     
-        <br/></br><br/>
-        <p>Red Panda Topic events:</p>
-        <table id="redpanda_results_table" width="600px"></table>
-        <div id="redpanda_results"></div>
-
-        </table>
-
+        <div class="buttonBox" id="results"></div>
     </body>
 </html>
