@@ -5,16 +5,19 @@ This example showcases the integration between [Redpanda](https://vectorized.io/
 To get started run `sh run.sh`
 
 This will spin up the following containers:
-- MongoDB single node replica set (port 27017)
+- MongoDB single node (port 27017)
 - RedPanda
 - Kafka Connect with MongoDB Connector for Apache Kafka installed
-- Node Server (hosting an Express instance back end) (port 4000)
+- Node Server (hosting an Express) (port 4000)
 
 ![Architecture](architecture.png)
 
-Once up navigate to 
-http://localhost:3000
+ First, once your docker containers are up and running, you can configure the MongoDB Sink connect as follows:
 
-As of now you will just see the splash page and a button at the bottom.  When you click the button it sends an API request to the back end and sends back a message.  This is just testing the connectivity betweent these components.  Next step is to add functionality in Express to communicate with Redpanda.
+ `curl -X POST -H "Content-Type: application/json" -d @mongodb-sink.json  http://localhost:8083/connectors`
 
- curl -X POST -H "Content-Type: application/json" -d @mongodb-sink.json  http://localhost:8083/connectors
+Next, point your browser to 
+http://localhost:4000
+
+Click the Start button to start generating stock data.
+
