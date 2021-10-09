@@ -72,39 +72,20 @@ services:
       - "27017:27017"
     restart: always
 
-  # nodesvr:
-  #   image: node:16
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile-Nodesvr
-  #   hostname: nodesvr
-  #   container_name: nodesvr
-  #   depends_on:
-  #     - redpanda
-  #     - mongo1
-  #   ports:
-  #     - "4000:4000"
-  #   networks:
-  #     - localnet
-
-  # reactclient:
-  #   image: node:16-alpine
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile-Reactclient
-  #   hostname: reactc
-  #   container_name: reactc
-  #   depends_on:
-  #     - redpanda
-  #     - mongo1
-  #     - nodesvr
-  #   ports:
-  #     - "3000:3000"
-  #   # volumes:
-  #   #   - '.:/app'
-  #   #   - '/app/node_modules'
-  #   networks:
-  #     - localnet
+   nodesvr:
+     image: node:16
+     build:
+       context: .
+       dockerfile: Dockerfile-Nodesvr
+     hostname: nodesvr
+     container_name: nodesvr
+     depends_on:
+       - redpanda
+       - mongo1
+     ports:
+       - "4000:4000"
+     networks:
+       - localnet
 
 networks:
   localnet:
