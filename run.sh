@@ -44,5 +44,10 @@ sh status.h
 To tear down the environment and stop these serivces:
 docker-compose-down -v
 
+BEFORE YOU START THE DEMO, you will need configure the MongoDB Connector via
+
+curl -X POST -H "Content-Type: application/json" -d @mongodb-sink.json  http://localhost:8083/connectors
+
+
 ==============================================================================================================
 '''
