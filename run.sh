@@ -12,10 +12,37 @@ echo "Starting docker ."
 docker-compose up -d --build
 
 sleep 5
+echo "\n\nWaiting for the systems to be ready.."
+function test_systems_available {
+  COUNTER=0
+  until $(curl --output /dev/null --silent --head --fail http://localhost:$1); do
+      printf '.'
+      sleep 2
+      let COUNTER+=1
+      if [[ $COUNTER -gt 30 ]]; then
+        MSG="\nWARNING: Could not reach configured kafka connect system on http://localhost:$1 \nNote: This script requires curl.\n"
+
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            MSG+="\nIf using OSX please try reconfiguring Docker and increasing RAM and CPU. Then restart and try again.\n\n"
+          fi
+
+        echo -e $MSG
+        clean_up "$MSG"
+        exit 1
+      fi
+  done
+}
+
+test_systems_available 8083
 
 #echo -e "\nConfiguring the MongoDB ReplicaSet of 1 node...\n"
 #docker-compose exec mongo1 /usr/bin/mongo --eval '''rsconf = { _id : "rs0", members: [ { _id : 0, host : "mongo1:27017", priority: 1.0 }]};
 #rs.initiate(rsconf);'''
+
+sleep 5
+
+echo "\n\Configuring MongoDB Connector for Apache Kafka...\n\n"
+curl --silent -X POST -H "Content-Type: application/json" -d @mongodb-sink.json  http://localhost:8083/connectors
 
 sleep 5
 
@@ -43,11 +70,6 @@ sh status.h
 
 To tear down the environment and stop these serivces:
 docker-compose-down -v
-
-BEFORE YOU START THE DEMO, you will need configure the MongoDB Connector via
-
-curl -X POST -H "Content-Type: application/json" -d @mongodb-sink.json  http://localhost:8083/connectors
-
 
 ==============================================================================================================
 '''

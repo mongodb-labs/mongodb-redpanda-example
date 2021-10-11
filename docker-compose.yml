@@ -56,7 +56,7 @@ services:
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       
   mongo1:
-    image: "mongo:latest"
+    image: "mongo:5.0.3"
     container_name: mongo1
    # command: --replSet rs0 --oplogSize 128
     volumes:
