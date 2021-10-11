@@ -21,7 +21,7 @@ const kafka = new Kafka({
 
 //Connect to MongoDB
 const uri =
-  "mongodb://127.0.0.1"; 
+  "mongodb://mongo1"; 
 const client = new MongoClient(uri);
 
 //This function tests the REST API
