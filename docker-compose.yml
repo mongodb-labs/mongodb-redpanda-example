@@ -12,15 +12,11 @@ services:
     - --overprovisioned
     - --node-id
     - '0'
-    - --pandaproxy-addr
-    - 0.0.0.0:8082
-    - --advertise-pandaproxy-addr
-    - 127.0.0.1:8082
     - --kafka-addr
-    - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+    - PLAINTEXT://0.0.0.0:9092
     - --advertise-kafka-addr
-    - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
-    image: docker.vectorized.io/vectorized/redpanda:latest
+    - PLAINTEXT://redpanda:9092
+    image: docker.vectorized.io/vectorized/redpanda:v21.9.3
     container_name: redpanda-1
     hostname: redpanda
     networks:
@@ -28,7 +24,6 @@ services:
     ports:
     - 9092:9092
     - 29092:29092
-    - 8082:8082
 
   connect:
     image: confluentinc/cp-kafka-connect-base:latest
@@ -44,7 +39,7 @@ services:
     networks:
       - localnet
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: 'redpanda:29092'
+      CONNECT_BOOTSTRAP_SERVERS: 'redpanda:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: connect-cluster-group
