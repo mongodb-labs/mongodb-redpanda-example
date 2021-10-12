@@ -13,9 +13,9 @@ services:
     - --node-id
     - '0'
     - --kafka-addr
-    - PLAINTEXT://0.0.0.0:9092
+    - PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
     - --advertise-kafka-addr
-    - PLAINTEXT://redpanda:9092
+    - PLAINTEXT://redpanda:9092,OUTSIDE://localhost:9093
     image: docker.vectorized.io/vectorized/redpanda:v21.9.3
     container_name: redpanda-1
     hostname: redpanda
@@ -24,6 +24,7 @@ services:
     ports:
     - 9092:9092
     - 29092:29092
+    - 9093:9093
 
   connect:
     image: confluentinc/cp-kafka-connect-base:latest
