@@ -66,10 +66,10 @@ Kafka Connect on 8083
 Node Server on 4000 is hosting the API and homepage
 
 Status of kafka connectors:
-sh status.h
+sh status.sh
 
 To tear down the environment and stop these serivces:
-docker-compose-down -v
+docker-compose down -v
 
 ==============================================================================================================
 '''
