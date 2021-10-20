@@ -17,13 +17,7 @@ services:
     - --advertise-kafka-addr
     - PLAINTEXT://redpanda:9092,OUTSIDE://localhost:9093
     image: docker.vectorized.io/vectorized/redpanda:v21.9.3
-    container_name: redpanda-1
-    hostname: redpanda
-    networks:
-      - localnet
     ports:
-    - 9092:9092
-    - 29092:29092
     - 9093:9093
 
   connect:
@@ -31,14 +25,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-MongoConnect
-    hostname: connect
-    container_name: connect
     depends_on:
       - redpanda
     ports:
       - "8083:8083"
-    networks:
-      - localnet
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'redpanda:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
@@ -58,12 +48,9 @@ services:
       
   mongo1:
     image: "mongo:5.0.3"
-    container_name: mongo1
    # command: --replSet rs0 --oplogSize 128
     volumes:
-      - rs1:/data/db
-    networks:
-      - localnet
+      - /data/db
     ports:
       - "27017:27017"
     restart: always
@@ -73,19 +60,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-Nodesvr
-    hostname: nodesvr
-    container_name: nodesvr
     depends_on:
       - redpanda
       - mongo1
     ports:
       - "4000:4000"
-    networks:
-      - localnet
-
-networks:
-  localnet:
-    attachable: true
-
-volumes:
-  rs1:
